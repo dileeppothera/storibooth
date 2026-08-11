@@ -70,3 +70,4 @@ js/
 - **Social share:** add Open Graph / Twitter meta tags + an OG preview image for nicer link previews.
 - **Perf (optional):** convert `aphrodite.otf` → `woff2` for a smaller font download.
 - Gallery/Experience images are the client's brochure prints — swap for real event photos if desired.
+# storibooth
