@@ -232,3 +232,32 @@ if (hasGSAP && window.ScrollTrigger && !reduceMotion) {
   btnSend && btnSend.addEventListener('click', send);
   window.addEventListener('pagehide', () => { if (stream) stream.getTracks().forEach((t) => t.stop()); });
 })();
+
+/* ---------- Meta Pixel ViewContent Tracker ---------- */
+(function () {
+  if (typeof IntersectionObserver === 'undefined') return;
+  const sections = [
+    { id: 'gallery', name: 'Storibooth Gallery' },
+    { id: 'pricing', name: 'Storibooth Pricing' },
+  ];
+  const viewed = new Set();
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting && !viewed.has(entry.target.id)) {
+        viewed.add(entry.target.id);
+        const item = sections.find((s) => s.id === entry.target.id);
+        if (item && typeof fbq === 'function') {
+          fbq('track', 'ViewContent', {
+            content_name: item.name,
+            content_category: location.hostname,
+          });
+        }
+      }
+    });
+  }, { threshold: 0.25 });
+
+  sections.forEach((s) => {
+    const el = document.getElementById(s.id);
+    if (el) obs.observe(el);
+  });
+})();
