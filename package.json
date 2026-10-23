@@ -1,0 +1,10 @@
+{
+  "name": "storibooth-site",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Storibooth marketing site + booth Polaroid→WhatsApp functions",
+  "type": "module",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}

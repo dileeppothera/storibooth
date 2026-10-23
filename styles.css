@@ -85,6 +85,7 @@ a{color:inherit;text-decoration:none}
 }
 .btn:hover{transform:translateY(-2px)}
 .btn .wa{width:1.2em;height:1.2em;fill:currentColor}
+.btn .cal{width:1.2em;height:1.2em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .btn--wine{--bg:var(--wine);--fg:var(--cream);box-shadow:0 8px 22px -10px rgba(132,21,21,.6)}
 .btn--wine:hover{box-shadow:0 14px 30px -10px rgba(132,21,21,.7)}
 .btn--cream{--bg:var(--cream);--fg:var(--wine);box-shadow:0 10px 30px -12px rgba(0,0,0,.4)}
@@ -188,9 +189,10 @@ a{color:inherit;text-decoration:none}
 .screen__idle-mask{position:absolute;left:0;right:0;bottom:0;height:34%;z-index:1;pointer-events:none;
   background:linear-gradient(to bottom,rgba(10,10,10,0) 0%,#0b0b0b 52%)}
 
-/* --- capture controls: INSIDE the screen, 3D button --- */
+/* --- "Click here" start button: INSIDE the screen, 3D --- */
 .cap{position:absolute;left:50%;bottom:6%;transform:translateX(-50%);z-index:4;
   display:flex;align-items:center;justify-content:center;width:92%}
+.screen.is-live .cap,.screen.is-captured .cap{display:none}
 .cap__start{
   display:inline-flex;align-items:center;gap:.4em;cursor:pointer;border:0;
   font-family:var(--font-body);font-weight:700;font-size:.92vw;letter-spacing:.01em;color:var(--wine);
@@ -203,25 +205,42 @@ a{color:inherit;text-decoration:none}
 .cap__start:hover{transform:translateY(-1px)}
 .cap__start:active{transform:translateY(.16vw);box-shadow:0 0 0 #c9b49c,0 .2vw .3vw rgba(0,0,0,.4),inset 0 1px 0 #fff}
 
-/* round 3D shutter (live state) */
-.cap__shutter{width:2.7vw;height:2.7vw;border-radius:50%;cursor:pointer;padding:0;border:0;
-  background:radial-gradient(circle at 50% 38%,#fffef9,#e9dcc9);
-  box-shadow:0 .22vw 0 #c1ac93,0 .55vw .8vw rgba(0,0,0,.5),inset 0 1px 1px #fff;
-  display:grid;place-items:center;transition:transform .1s ease,box-shadow .1s ease}
-.cap__shutter span{width:64%;height:64%;border-radius:50%;background:radial-gradient(circle at 50% 40%,#a51d1d,var(--wine));
-  box-shadow:inset 0 0 0 .12vw rgba(255,255,255,.85),inset 0 -.1vw .2vw rgba(0,0,0,.4)}
-.cap__shutter:active{transform:translateY(.2vw);box-shadow:0 .05vw 0 #c1ac93,0 .2vw .35vw rgba(0,0,0,.45),inset 0 1px 1px #fff}
+/* tap-anywhere target while the camera is live (one tap = snap now) */
+.screen__tap{position:absolute;inset:0;z-index:3;border:0;background:transparent;cursor:pointer;padding:0}
+.screen.is-live .screen__tap{display:block}
 
-/* retake / send mini 3D buttons (captured state) */
-.cap__after{display:flex;gap:.6vw}
-.cap__mini{width:2.4vw;height:2.4vw;border-radius:50%;cursor:pointer;border:0;padding:0;
-  display:grid;place-items:center;font-size:1.2vw;font-weight:700;color:var(--wine);
-  background:linear-gradient(#fffdf9,#efe4d4);
-  box-shadow:0 .18vw 0 #c9b49c,0 .45vw .6vw rgba(0,0,0,.45),inset 0 1px 0 #fff;
-  transition:transform .1s ease,box-shadow .1s ease}
-.cap__mini .wa{width:1.3vw;height:1.3vw;fill:#25d366}
-.cap__send{background:linear-gradient(#eafff2,#c9f4da)}
-.cap__mini:active{transform:translateY(.18vw)}
+/* auto countdown number over the live feed */
+.screen__count{position:absolute;inset:0;z-index:4;display:none;place-items:center;pointer-events:none;
+  font-family:'Aphrodite',var(--font-display);color:#fffdfa;
+  font-size:11vw;line-height:1;text-shadow:0 .2vw 1.4vw rgba(0,0,0,.55)}
+.screen.is-live .screen__count{display:grid}
+.screen__count.is-on{animation:countPop .82s ease-out}
+@keyframes countPop{0%{opacity:0;transform:scale(1.5)}22%{opacity:1;transform:scale(1)}100%{opacity:.15;transform:scale(.82)}}
+
+/* --- the printed keepsake that pops out of the booth --- */
+.polaroid{position:absolute;inset:0;z-index:6;margin:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  padding-top:4vh;gap:1vw;pointer-events:none}
+.polaroid__hint{font-family:var(--font-body);font-size:.8vw;letter-spacing:.18em;text-transform:uppercase;
+  color:rgba(255,251,245,.7)}
+.polaroid__img{max-height:52vh;max-width:74%;width:auto;height:auto;border-radius:2px;
+  box-shadow:0 2.4vw 4vw -1vw rgba(0,0,0,.6),0 0 0 1px rgba(0,0,0,.04);
+  transform:rotate(-2.4deg)}
+.polaroid.is-in .polaroid__img{animation:printOut .7s cubic-bezier(.2,.8,.25,1)}
+@keyframes printOut{0%{opacity:0;transform:translateY(-14%) rotate(-2.4deg) scale(.9)}
+  60%{opacity:1}100%{opacity:1;transform:translateY(0) rotate(-2.4deg) scale(1)}}
+.polaroid__actions{display:flex;align-items:center;gap:.9vw;pointer-events:auto}
+.btn-print{display:inline-flex;align-items:center;gap:.45em;cursor:pointer;border:0;
+  font-family:var(--font-body);font-weight:700;font-size:.98vw;border-radius:100px;
+  transition:transform .12s ease,box-shadow .12s ease}
+.btn-print--send{color:#0b3d1e;padding:.62em 1.15em;background:linear-gradient(#eafff2,#bff0d2);
+  box-shadow:0 .2vw 0 #7fca9c,0 .55vw .8vw rgba(0,0,0,.4),inset 0 1px 0 #fff}
+.btn-print--send .wa{width:1.2em;height:1.2em;fill:#12924a}
+.btn-print--send:hover{transform:translateY(-1px)}
+.btn-print--send:active{transform:translateY(.16vw);box-shadow:0 0 0 #7fca9c,0 .2vw .3vw rgba(0,0,0,.4),inset 0 1px 0 #fff}
+.btn-print--retake{color:var(--cream);padding:.6em .9em;background:rgba(255,251,245,.12);
+  border:1px solid rgba(255,251,245,.34)}
+.btn-print--retake:hover{background:rgba(255,251,245,.2)}
 
 /* --- page 2 text (flanks the planted legs) --- */
 .p2{z-index:3;max-width:30%}
@@ -246,9 +265,21 @@ a{color:inherit;text-decoration:none}
   .flank{position:static;top:auto;font-size:4.4vw;order:2;text-align:center;margin-top:.2rem}
   .flank--l::after{content:" \00b7 Instantly Remembered";}
   .flank--r{display:none}
-  .booth{position:relative;left:auto;top:auto;width:min(78vw,340px);order:3;margin-top:1rem}
-  .cap__start{font-size:3.4vw}.cap__shutter{width:10vw;height:10vw}.cap__mini{width:9vw;height:9vw}.cap__mini .wa{width:5vw;height:5vw}
+  .booth{position:relative;left:auto;top:auto;width:min(82vw,360px);order:3;margin-top:1.2rem}
+  .cap__start{font-size:15px;padding:.55em 1.1em}
+  .screen__count{font-size:26vw}
   .foot-shadow{display:none}
+  /* captured print becomes a centered card overlay on phones */
+  .polaroid{position:fixed;inset:0;z-index:120;gap:18px;padding:76px 20px 28px;justify-content:center;
+    background:rgba(24,6,6,.85);backdrop-filter:blur(4px);pointer-events:auto}
+  .polaroid[hidden]{display:none}
+  .polaroid__hint{font-size:11px;letter-spacing:.2em}
+  .polaroid__img{max-height:58vh;max-width:82vw;transform:rotate(-2deg);
+    box-shadow:0 20px 50px -10px rgba(0,0,0,.7)}
+  .polaroid__actions{gap:12px}
+  .btn-print{font-size:15px}
+  .btn-print--send{padding:.75em 1.25em;box-shadow:0 3px 0 #7fca9c,0 8px 14px rgba(0,0,0,.4),inset 0 1px 0 #fff}
+  .btn-print--retake{padding:.72em 1em}
   .p2{position:relative;right:auto;left:auto;top:auto;max-width:90%;text-align:center;order:4;margin-top:1.6rem}
   .p2--l{text-align:center}
   .p2__h{font-size:8vw}.p2__lead{font-size:4vw}.p2__cta{font-size:3.6vw}
@@ -342,6 +373,7 @@ a{color:inherit;text-decoration:none}
 .cta{background:radial-gradient(120% 100% at 20% 10%,#9b1c1c,var(--wine) 45%,var(--wine-deep));color:var(--cream)}
 .cta__inner{display:grid;grid-template-columns:1.15fr .85fr;gap:clamp(2rem,5vw,4rem);align-items:center}
 .cta__lead{color:rgba(255,251,245,.82);font-size:1.1rem;margin:1.1rem 0 2rem;max-width:46ch}
+.cta__actions{display:flex;flex-wrap:wrap;gap:14px}
 .cta__contact{display:grid;gap:14px}
 .contact-row{display:flex;align-items:center;gap:16px;padding:16px 20px;border-radius:16px;
   background:rgba(255,251,245,.07);border:1px solid rgba(255,251,245,.14);transition:background .3s,transform .3s var(--ease)}

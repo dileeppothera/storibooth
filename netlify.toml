@@ -1,0 +1,9 @@
+# Storibooth — Netlify config
+# Static site (no build step) + two serverless functions that power the
+# booth's "Send to WhatsApp with the Polaroid" flow (feature #6).
+
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+# Netlify Blobs (used by the functions) needs no extra config on Netlify.

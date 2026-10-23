@@ -4,13 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Storibooth — Beautiful Moments, Instantly Remembered</title>
-  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
   <meta name="description" content="Storibooth brings elegant photo booths, instant premium prints, and unforgettable guest experiences to weddings and events across Kerala & destination events. A vertical of Storibod." />
-
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..500&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css" />
 
   <!-- Meta Pixel Code -->
   <script>
@@ -40,6 +34,17 @@
   <noscript><img height="1" width="1" style="display:none"
     src="https://www.facebook.com/tr?id=1412598573781133&ev=PageView&noscript=1"/></noscript>
   <!-- End Meta Pixel Code -->
+
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..500&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Calendly popup booking -->
+  <link rel="stylesheet" href="https://assets.calendly.com/assets/external/widget.css" />
+  <script src="https://assets.calendly.com/assets/external/widget.js" async></script>
 </head>
 <body>
 
@@ -81,20 +86,28 @@
         <div class="screen" data-screen>
           <div class="screen__idle-mask" aria-hidden="true"></div>
           <video class="screen__media screen__video" data-video playsinline muted></video>
-          <canvas class="screen__media screen__canvas" data-canvas></canvas>
           <span class="screen__flash" data-flash></span>
+          <div class="screen__count" data-count aria-hidden="true"></div>
+          <button class="screen__tap" data-act="snap" type="button" hidden aria-label="Take the photo now"></button>
           <div class="cap" data-controls>
             <button class="cap__start" data-act="start" type="button">
               <svg viewBox="0 0 24 24" class="ic" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h1.2l.9-1.5A1 1 0 0 1 9 4h6a1 1 0 0 1 .9.5L16.8 6H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8Z"/><circle cx="12" cy="12.5" r="3.4"/></svg>
               <span>Click here</span>
             </button>
-            <button class="cap__shutter" data-act="capture" type="button" hidden aria-label="Capture photo"><span></span></button>
-            <div class="cap__after" data-after hidden>
-              <button class="cap__mini" data-act="retake" type="button" aria-label="Retake">&#8635;</button>
-              <button class="cap__mini cap__send" data-act="send" type="button" aria-label="Send to WhatsApp"><svg class="wa" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.78 1.22h.01c5.46 0 9.9-4.45 9.9-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm5.8 14.09c-.25.7-1.44 1.33-1.99 1.41-.53.08-1.17.11-1.89-.12-.44-.14-1-.32-1.71-.63-3.01-1.3-4.98-4.33-5.13-4.53-.15-.2-1.23-1.64-1.23-3.12s.78-2.21 1.05-2.51c.28-.3.6-.38.8-.38l.57.01c.18.01.43-.07.67.51.25.6.84 2.08.91 2.23.07.15.12.32.02.52-.1.2-.15.32-.3.5-.15.17-.31.39-.44.52-.15.15-.3.31-.13.61.17.3.76 1.25 1.63 2.02 1.12 1 2.06 1.31 2.36 1.46.3.15.47.13.64-.08.17-.2.74-.86.94-1.16.2-.3.4-.25.67-.15.28.1 1.76.83 2.06.98.3.15.5.22.57.35.08.13.08.73-.17 1.42Z"/></svg></button>
-            </div>
           </div>
         </div>
+        <!-- the printed keepsake — pops out like a fresh print -->
+        <figure class="polaroid" data-polaroid hidden>
+          <span class="polaroid__hint">Your Storibooth print</span>
+          <img class="polaroid__img" data-print alt="Your Storibooth keepsake print" />
+          <div class="polaroid__actions">
+            <button class="btn-print btn-print--send" data-act="send" type="button">
+              <svg class="wa" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.78 1.22h.01c5.46 0 9.9-4.45 9.9-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm5.8 14.09c-.25.7-1.44 1.33-1.99 1.41-.53.08-1.17.11-1.89-.12-.44-.14-1-.32-1.71-.63-3.01-1.3-4.98-4.33-5.13-4.53-.15-.2-1.23-1.64-1.23-3.12s.78-2.21 1.05-2.51c.28-.3.6-.38.8-.38l.57.01c.18.01.43-.07.67.51.25.6.84 2.08.91 2.23.07.15.12.32.02.52-.1.2-.15.32-.3.5-.15.17-.31.39-.44.52-.15.15-.3.31-.13.61.17.3.76 1.25 1.63 2.02 1.12 1 2.06 1.31 2.36 1.46.3.15.47.13.64-.08.17-.2.74-.86.94-1.16.2-.3.4-.25.67-.15.28.1 1.76.83 2.06.98.3.15.5.22.57.35.08.13.08.73-.17 1.42Z"/></svg>
+              Send to WhatsApp
+            </button>
+            <button class="btn-print btn-print--retake" data-act="retake" type="button">&#8635; Retake</button>
+          </div>
+        </figure>
       </div>
 
       <div class="p2 p2--l" data-p2l>
@@ -279,6 +292,10 @@
             <svg class="wa" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.78 1.22h.01c5.46 0 9.9-4.45 9.9-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm5.8 14.09c-.25.7-1.44 1.33-1.99 1.41-.53.08-1.17.11-1.89-.12-.44-.14-1-.32-1.71-.63-3.01-1.3-4.98-4.33-5.13-4.53-.15-.2-1.23-1.64-1.23-3.12s.78-2.21 1.05-2.51c.28-.3.6-.38.8-.38l.57.01c.18.01.43-.07.67.51.25.6.84 2.08.91 2.23.07.15.12.32.02.52-.1.2-.15.32-.3.5-.15.17-.31.39-.44.52-.15.15-.3.31-.13.61.17.3.76 1.25 1.63 2.02 1.12 1 2.06 1.31 2.36 1.46.3.15.47.13.64-.08.17-.2.74-.86.94-1.16.2-.3.4-.25.67-.15.28.1 1.76.83 2.06.98.3.15.5.22.57.35.08.13.08.73-.17 1.42Z"/></svg>
             Chat with us on WhatsApp
           </a>
+          <button class="btn btn--ghost-light btn--lg" data-calendly type="button">
+            <svg class="cal" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="16" rx="2.5"/><path d="M3.5 9h17M8 3v3m8-3v3"/></svg>
+            Pick a time to talk
+          </button>
         </div>
       </div>
       <div class="cta__contact" data-reveal>
@@ -325,6 +342,25 @@
   <script src="js/gsap.min.js"></script>
   <script src="js/scrolltrigger.min.js"></script>
   <script src="js/lenis.min.js"></script>
+
+  <!-- Calendly booking: swap the URL below for your own Calendly event link -->
+  <script>
+    (function () {
+      var CALENDLY_URL = 'https://calendly.com/storibodmoments'; // <-- CHANGE THIS to your Calendly link
+      document.querySelectorAll('[data-calendly]').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.preventDefault();
+          var url = btn.getAttribute('data-calendly-url') || CALENDLY_URL;
+          if (window.Calendly && Calendly.initPopupWidget) {
+            Calendly.initPopupWidget({ url: url });
+          } else {
+            window.open(url, '_blank', 'noopener'); // fallback if the widget hasn't loaded
+          }
+        });
+      });
+    })();
+  </script>
+
   <script src="script.js"></script>
 </body>
 </html>
