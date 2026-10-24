@@ -164,17 +164,18 @@ if (hasGSAP && window.ScrollTrigger && !reduceMotion) {
   // number with a link to the uploaded Polaroid. If it's unavailable it silently falls back
   // to the phone's native share (image attached). Set to '' to disable and always use share.
   const UPLOAD_ENDPOINT = '/.netlify/functions/polaroid-upload';
-  let stream = null, photoBlob = null, printURL = null, countTimer = null, armed = false;
+  let stream = null, photoBlob = null, printURL = null, countTimer = null, armed = false, uploadedURL = null, starting = false;
 
   const show = (el, on) => { if (el) el.hidden = !on; };
 
   /* ---- camera on → auto 3-2-1 countdown → capture (one tap, or tap to snap now) ---- */
   async function start() {
+    if (starting || screen.classList.contains('is-live')) return;   // guard double-start
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       setLabel('Needs https'); setTimeout(() => setLabel('Click here'), 2600);
       return;
     }
-    btnStart.disabled = true;
+    starting = true; btnStart.disabled = true;
     try {
       stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 1280 } }, audio: false
@@ -189,7 +190,7 @@ if (hasGSAP && window.ScrollTrigger && !reduceMotion) {
       const msg = (err && err.name === 'NotAllowedError') ? 'Allow camera' : 'No camera';
       setLabel(msg); setTimeout(() => setLabel('Click here'), 2600);
     } finally {
-      btnStart.disabled = false;
+      starting = false; btnStart.disabled = false;
     }
   }
 
@@ -223,6 +224,19 @@ if (hasGSAP && window.ScrollTrigger && !reduceMotion) {
     show(polaroid, true);
     polaroid.classList.remove('is-in'); void polaroid.offsetWidth; polaroid.classList.add('is-in');
     stopStream();
+
+    // #6 — pre-upload the Polaroid NOW so "Send" can open WhatsApp synchronously
+    // (iOS Safari blocks opening WhatsApp after an await, so we can't upload on tap).
+    uploadedURL = null;
+    if (UPLOAD_ENDPOINT) {
+      if (btnSend) btnSend.disabled = true;
+      setHint('Getting your WhatsApp ready…');
+      uploadPolaroid(photoBlob).then((u) => {
+        uploadedURL = u;
+        if (btnSend) btnSend.disabled = false;
+        setHint(u ? 'Ready — send it straight to us.' : 'Tap send to share your polaroid.');
+      });
+    }
   }
 
   /* ---- compose a classic POLAROID: white frame · colour photo · thick bottom strip ---- */
@@ -315,26 +329,23 @@ if (hasGSAP && window.ScrollTrigger && !reduceMotion) {
     } catch (_) { clearTimeout(timer); return null; }
   }
 
-  async function send() {
-    if (btnSend) btnSend.disabled = true;
-    // #6 — preferred: hand WhatsApp our number + a link to the uploaded Polaroid,
-    // so it opens already addressed to us with the image one tap away.
-    setHint('Opening WhatsApp…');
-    const imgURL = await uploadPolaroid(photoBlob);
-    if (btnSend) btnSend.disabled = false;
-    if (imgURL) {
-      const text = MSG + '\n\nHere’s my Storibooth polaroid: ' + imgURL;
-      window.open(WA + '?text=' + encodeURIComponent(text), '_blank', 'noopener');
-      setHint('WhatsApp opened — just hit send.');
+  // SYNCHRONOUS (no await before opening WhatsApp) so iOS Safari actually opens it.
+  function send() {
+    // #6 fast path — the Polaroid is already uploaded: open WhatsApp ADDRESSED TO OUR
+    // sales number with the message + a link to the photo, ready to send.
+    if (uploadedURL) {
+      const text = MSG + '\n\nHere’s my Storibooth polaroid: ' + uploadedURL;
+      window.location.href = WA + '?text=' + encodeURIComponent(text);
       return;
     }
-    // Fallback (endpoint off/unreachable): phone share sheet puts the actual image into WhatsApp…
+    // No upload link (endpoint off / still uploading / failed) → native share puts the
+    // actual image into WhatsApp (phone), but WhatsApp picks the chat, not our number.
     const file = photoBlob ? new File([photoBlob], 'storibooth-polaroid.jpg', { type: 'image/jpeg' }) : null;
     if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
-      try { await navigator.share({ files: [file], text: MSG }); return; }
-      catch (e) { if (e && e.name === 'AbortError') return; }
+      navigator.share({ files: [file], text: MSG }).catch(() => {});
+      return;
     }
-    // …or on desktop, save the Polaroid and open the chat so it can be attached manually.
+    // Desktop fallback: save the Polaroid, open the chat (text only) to attach manually.
     if (photoBlob) {
       const a = document.createElement('a');
       a.href = printURL || URL.createObjectURL(photoBlob);
@@ -348,6 +359,11 @@ if (hasGSAP && window.ScrollTrigger && !reduceMotion) {
   function stopStream() { if (stream) { stream.getTracks().forEach((t) => t.stop()); stream = null; } }
 
   btnStart && btnStart.addEventListener('click', start);
+  // tapping anywhere on the idle booth screen also starts it (bigger, friendlier touch target)
+  screen.addEventListener('click', (e) => {
+    if (e.target.closest('[data-controls]')) return;                 // the button handles its own click
+    if (!screen.classList.contains('is-live') && polaroid.hidden) start();
+  });
   tapTarget && tapTarget.addEventListener('click', snapNow);
   btnRetake && btnRetake.addEventListener('click', retake);
   btnSend && btnSend.addEventListener('click', send);
