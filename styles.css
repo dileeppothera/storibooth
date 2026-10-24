@@ -267,9 +267,9 @@ a{color:inherit;text-decoration:none}
     display:block;width:100%;white-space:nowrap;line-height:1.3}
   .flank--r{display:block}
   .booth{position:relative;left:auto;top:auto;width:min(93vw,460px);order:3;margin-top:1.1rem}
-  .cap{width:98%}
-  .cap__start{font-size:13px;padding:.48em .85em;gap:.3em;white-space:nowrap}
-  .cap__start .ic{width:1em;height:1em}
+  .cap{width:100%;bottom:8%}
+  .cap__start{font-size:clamp(10.5px,3vw,13.5px);padding:.5em .78em;gap:0;white-space:nowrap;max-width:94%}
+  .cap__start .ic{display:none}                /* glass is ~86px wide on phones — text-only fits, icon doesn't */
   .screen__count{font-size:26vw}
   .foot-shadow{display:none}
   /* captured print becomes a centered card overlay on phones */

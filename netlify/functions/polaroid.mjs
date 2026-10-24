@@ -4,7 +4,7 @@ import { getStore } from '@netlify/blobs';
 export const config = { path: '/p/:id' };
 
 export default async (_req, context) => {
-  const { id } = context.params;
+  const id = context.params.id.replace(/\.jpg$/, '');
   const store = getStore('polaroids');
   const data = await store.get(id, { type: 'arrayBuffer' });
   if (!data) return new Response('Not found', { status: 404 });

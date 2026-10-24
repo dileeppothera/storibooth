@@ -19,7 +19,8 @@ export default async (req) => {
   await store.set(id, bytes, { metadata: { contentType: 'image/jpeg' } });
 
   const origin = new URL(req.url).origin;
-  return Response.json({ url: `${origin}/p/${id}` }, {
+  // .jpg suffix so WhatsApp renders an image preview of the shared link
+  return Response.json({ url: `${origin}/p/${id}.jpg` }, {
     headers: { 'Access-Control-Allow-Origin': '*' }
   });
 };
