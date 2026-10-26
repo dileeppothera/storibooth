@@ -98,3 +98,4 @@ When the guest taps **Send to WhatsApp**, we want WhatsApp to open **addressed t
 - **Use a different host's functions/storage:** re-point `UPLOAD_ENDPOINT` and port the two files in `netlify/functions/` to that host; keep the `{ "url": "…" }` JSON response shape.
 - **Disable #6 entirely** (always use the share sheet): set `UPLOAD_ENDPOINT = ''` in `script.js`.
 
+
