@@ -225,17 +225,13 @@ if (hasGSAP && window.ScrollTrigger && !reduceMotion) {
     polaroid.classList.remove('is-in'); void polaroid.offsetWidth; polaroid.classList.add('is-in');
     stopStream();
 
-    // #6 — pre-upload the Polaroid NOW so "Send" can open WhatsApp synchronously
-    // (iOS Safari blocks opening WhatsApp after an await, so we can't upload on tap).
+    // #6 — pre-upload the Polaroid in the background so, by the time they tap Send,
+    // the photo link is ready to ride along. Send ALWAYS opens our number regardless
+    // (never blocks on the upload) — the link is just a bonus when it's finished.
     uploadedURL = null;
+    setHint('Send it straight to us on WhatsApp.');
     if (UPLOAD_ENDPOINT) {
-      if (btnSend) btnSend.disabled = true;
-      setHint('Getting your WhatsApp ready…');
-      uploadPolaroid(photoBlob).then((u) => {
-        uploadedURL = u;
-        if (btnSend) btnSend.disabled = false;
-        setHint(u ? 'Ready — send it straight to us.' : 'Tap send to share your polaroid.');
-      });
+      uploadPolaroid(photoBlob).then((u) => { uploadedURL = u; });
     }
   }
 
@@ -329,31 +325,12 @@ if (hasGSAP && window.ScrollTrigger && !reduceMotion) {
     } catch (_) { clearTimeout(timer); return null; }
   }
 
-  // SYNCHRONOUS (no await before opening WhatsApp) so iOS Safari actually opens it.
+  // SYNCHRONOUS (no await) so iOS Safari actually opens WhatsApp.
+  // ALWAYS opens our sales number chat — with the Polaroid link when the upload is ready.
   function send() {
-    // #6 fast path — the Polaroid is already uploaded: open WhatsApp ADDRESSED TO OUR
-    // sales number with the message + a link to the photo, ready to send.
-    if (uploadedURL) {
-      const text = MSG + '\n\nHere’s my Storibooth polaroid: ' + uploadedURL;
-      window.location.href = WA + '?text=' + encodeURIComponent(text);
-      return;
-    }
-    // No upload link (endpoint off / still uploading / failed) → native share puts the
-    // actual image into WhatsApp (phone), but WhatsApp picks the chat, not our number.
-    const file = photoBlob ? new File([photoBlob], 'storibooth-polaroid.jpg', { type: 'image/jpeg' }) : null;
-    if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
-      navigator.share({ files: [file], text: MSG }).catch(() => {});
-      return;
-    }
-    // Desktop fallback: save the Polaroid, open the chat (text only) to attach manually.
-    if (photoBlob) {
-      const a = document.createElement('a');
-      a.href = printURL || URL.createObjectURL(photoBlob);
-      a.download = 'storibooth-polaroid.jpg';
-      document.body.appendChild(a); a.click(); a.remove();
-      setHint('Polaroid saved — attach it in the WhatsApp chat we just opened.');
-    }
-    window.open(WA + '?text=' + encodeURIComponent(MSG), '_blank', 'noopener');
+    let text = MSG;
+    if (uploadedURL) text += '\n\nHere’s my Storibooth polaroid: ' + uploadedURL;
+    window.location.href = WA + '?text=' + encodeURIComponent(text);
   }
 
   function stopStream() { if (stream) { stream.getTracks().forEach((t) => t.stop()); stream = null; } }
