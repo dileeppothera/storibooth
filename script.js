@@ -153,17 +153,18 @@ if (hasGSAP && window.ScrollTrigger && !reduceMotion) {
   const setLabel = (t) => { if (startLabel) startLabel.textContent = t; };
 
   const printImg = polaroid.querySelector('[data-print]');
-  const btnSend = polaroid.querySelector('[data-act="send"]');
-  const btnRetake = polaroid.querySelector('[data-act="retake"]');
-  const hintEl = polaroid.querySelector('.polaroid__hint');
-  const setHint = (t) => { if (hintEl) hintEl.textContent = t; };
+  const leadForm = polaroid.querySelector('[data-lead]');
+  const leadBody = polaroid.querySelector('.cc__body');
+  const leadDone = polaroid.querySelector('[data-done]');
+  const leadErr = polaroid.querySelector('[data-err]');
+  const leadBtn = polaroid.querySelector('[data-act="submit"]');
+  const fName = polaroid.querySelector('[data-f="name"]');
+  const fPhone = polaroid.querySelector('[data-f="phone"]');
+  const fDate = polaroid.querySelector('[data-f="date"]');
 
-  const WA = 'https://wa.me/917356333965';
-  const MSG = "Hi Storibooth! Here's my keepsake from the booth — I'd love to book Storibooth for my event.";
-  // #6: when this upload endpoint is live, "Send" opens WhatsApp ALREADY ADDRESSED to our
-  // number with a link to the uploaded Polaroid. If it's unavailable it silently falls back
-  // to the phone's native share (image attached). Set to '' to disable and always use share.
+  // Netlify functions: store the photo, then write the lead row to the Google Sheet.
   const UPLOAD_ENDPOINT = '/.netlify/functions/polaroid-upload';
+  const LEAD_ENDPOINT = '/.netlify/functions/lead';
   let stream = null, photoBlob = null, printURL = null, countTimer = null, armed = false, uploadedURL = null, starting = false;
 
   const show = (el, on) => { if (el) el.hidden = !on; };
@@ -182,7 +183,7 @@ if (hasGSAP && window.ScrollTrigger && !reduceMotion) {
       });
       video.srcObject = stream;
       await video.play();
-      show(polaroid, false); polaroid.classList.remove('is-in');
+      show(polaroid, false);
       screen.classList.add('is-live');
       armed = true;
       countdown(3);
@@ -221,18 +222,17 @@ if (hasGSAP && window.ScrollTrigger && !reduceMotion) {
     }, 'image/jpeg', 0.92));
 
     screen.classList.remove('is-live');
+    // show the capture card in its form state (reset any prior submit)
+    if (leadBody) leadBody.hidden = false;
+    if (leadDone) leadDone.hidden = true;
+    if (leadErr) { leadErr.hidden = true; leadErr.textContent = ''; }
+    if (leadForm) leadForm.reset();
     show(polaroid, true);
-    polaroid.classList.remove('is-in'); void polaroid.offsetWidth; polaroid.classList.add('is-in');
     stopStream();
 
-    // #6 — pre-upload the Polaroid in the background so, by the time they tap Send,
-    // the photo link is ready to ride along. Send ALWAYS opens our number regardless
-    // (never blocks on the upload) — the link is just a bonus when it's finished.
+    // background: upload the Polaroid so the lead row carries a photo link
     uploadedURL = null;
-    setHint('Send it straight to us on WhatsApp.');
-    if (UPLOAD_ENDPOINT) {
-      uploadPolaroid(photoBlob).then((u) => { uploadedURL = u; });
-    }
+    if (UPLOAD_ENDPOINT) uploadPolaroid(photoBlob).then((u) => { uploadedURL = u; });
   }
 
   /* ---- compose a classic POLAROID: white frame · colour photo · thick bottom strip ---- */
@@ -307,13 +307,13 @@ if (hasGSAP && window.ScrollTrigger && !reduceMotion) {
     ]).then(() => { fontsReady = true; });
   }
 
-  function retake() { show(polaroid, false); polaroid.classList.remove('is-in'); start(); }
+  function retake() { show(polaroid, false); start(); }
 
-  // upload the Polaroid to our endpoint; returns a public image URL, or null on any failure
+  // upload the Polaroid; returns a public image URL, or null on any failure
   async function uploadPolaroid(blob) {
     if (!UPLOAD_ENDPOINT || !blob) return null;
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 12000);
+    const timer = setTimeout(() => ctrl.abort(), 15000);
     try {
       const res = await fetch(UPLOAD_ENDPOINT, {
         method: 'POST', headers: { 'Content-Type': 'image/jpeg' }, body: blob, signal: ctrl.signal
@@ -325,12 +325,57 @@ if (hasGSAP && window.ScrollTrigger && !reduceMotion) {
     } catch (_) { clearTimeout(timer); return null; }
   }
 
-  // SYNCHRONOUS (no await) so iOS Safari actually opens WhatsApp.
-  // ALWAYS opens our sales number chat — with the Polaroid link when the upload is ready.
-  function send() {
-    let text = MSG;
-    if (uploadedURL) text += '\n\nHere’s my Storibooth polaroid: ' + uploadedURL;
-    window.location.href = WA + '?text=' + encodeURIComponent(text);
+  // let the guest save their Polaroid
+  function download() {
+    if (!photoBlob) return;
+    const file = new File([photoBlob], 'storibooth-polaroid.jpg', { type: 'image/jpeg' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {   // iOS/Android → "Save Image"
+      navigator.share({ files: [file], title: 'Storibooth' }).catch(() => {});
+      return;
+    }
+    const a = document.createElement('a');                               // desktop → direct download
+    a.href = printURL || URL.createObjectURL(photoBlob);
+    a.download = 'storibooth-polaroid.jpg';
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  function showErr(msg) { if (leadErr) { leadErr.textContent = msg; leadErr.hidden = false; } }
+
+  // submit the lead — stores the photo + writes a row to the Google Sheet
+  async function submitLead(e) {
+    if (e) e.preventDefault();
+    const name = (fName.value || '').trim();
+    const phone = (fPhone.value || '').trim();
+    const date = (fDate && fDate.value) || '';
+    if (leadErr) leadErr.hidden = true;
+    if (name.length < 2) { showErr('Please enter your name.'); fName.focus(); return; }
+    if (phone.replace(/\D/g, '').length < 8) { showErr('Please enter a valid WhatsApp number.'); fPhone.focus(); return; }
+
+    leadBtn.disabled = true;
+    const label = leadBtn.querySelector('span'); const was = label ? label.textContent : '';
+    if (label) label.textContent = 'Sending…';
+
+    // make sure the photo is uploaded (so the lead carries its link)
+    if (UPLOAD_ENDPOINT && !uploadedURL) { uploadedURL = await uploadPolaroid(photoBlob); }
+
+    let ok = false;
+    try {
+      const res = await fetch(LEAD_ENDPOINT, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, phone, event_date: date, photo_url: uploadedURL || '',
+          source: location.hostname, user_agent: navigator.userAgent })
+      });
+      ok = res.ok;
+    } catch (_) { ok = false; }
+
+    leadBtn.disabled = false; if (label) label.textContent = was;
+
+    if (ok) {
+      if (leadBody) leadBody.hidden = true;
+      if (leadDone) leadDone.hidden = false;
+    } else {
+      showErr('Couldn’t send just now — please try again.');
+    }
   }
 
   function stopStream() { if (stream) { stream.getTracks().forEach((t) => t.stop()); stream = null; } }
@@ -342,7 +387,12 @@ if (hasGSAP && window.ScrollTrigger && !reduceMotion) {
     if (!screen.classList.contains('is-live') && polaroid.hidden) start();
   });
   tapTarget && tapTarget.addEventListener('click', snapNow);
-  btnRetake && btnRetake.addEventListener('click', retake);
-  btnSend && btnSend.addEventListener('click', send);
+  leadForm && leadForm.addEventListener('submit', submitLead);
+  // retake / download buttons appear in both the top bar and the success screen
+  polaroid.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-act]'); if (!b) return;
+    if (b.getAttribute('data-act') === 'retake') retake();
+    else if (b.getAttribute('data-act') === 'download') download();
+  });
   window.addEventListener('pagehide', stopStream);
 })();
