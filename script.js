@@ -112,18 +112,6 @@ if (hasGSAP && window.ScrollTrigger && !reduceMotion) {
     });
   });
 
-  // marquee: base loop + scroll-velocity nudge
-  const track = document.querySelector('[data-marquee]');
-  if (track) {
-    const loop = gsap.to(track, { xPercent: -50, duration: 22, ease: 'none', repeat: -1 });
-    ScrollTrigger.create({
-      onUpdate: (self) => {
-        const v = gsap.utils.clamp(-3, 3, self.getVelocity() / -260);
-        gsap.to(loop, { timeScale: 1 + Math.abs(v), duration: 0.4, overwrite: true });
-      }
-    });
-  }
-
   ScrollTrigger.refresh();
 
 } else {
@@ -131,8 +119,6 @@ if (hasGSAP && window.ScrollTrigger && !reduceMotion) {
   document.querySelectorAll('[data-reveal]').forEach((el) => {
     el.style.opacity = 1; el.style.transform = 'none';
   });
-  const track = document.querySelector('[data-marquee]');
-  if (track && !reduceMotion) track.style.animation = 'marqueeFallback 24s linear infinite';
 }
 
 /* ============================================================
@@ -374,7 +360,7 @@ if (hasGSAP && window.ScrollTrigger && !reduceMotion) {
       if (leadBody) leadBody.hidden = true;
       if (leadDone) leadDone.hidden = false;
     } else {
-      showErr('Couldn’t send just now — please try again.');
+      showErr('Couldn’t send just now, please try again.');
     }
   }
 

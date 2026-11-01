@@ -117,7 +117,6 @@ a{color:inherit;text-decoration:none}
   color:var(--cream);position:relative;
 }
 .nav.is-stuck .nav__logo{color:var(--wine)}
-.nav__logo .dot{width:.28em;height:.28em;background:var(--gold);border-radius:50%;display:inline-block;margin-left:.12em;vertical-align:.55em}
 .nav__sub{
   font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;
   color:rgba(255,251,245,.6);margin-top:3px;font-weight:600;
@@ -308,12 +307,6 @@ a{color:inherit;text-decoration:none}
   .p2__h{font-size:8vw}.p2__lead{font-size:4vw}.p2__cta{font-size:3.6vw}
 }
 
-/* ============================================================
-   MARQUEE
-   ============================================================ */
-.marquee{background:var(--wine-deep);color:var(--cream);overflow:hidden;padding:16px 0;border-block:1px solid rgba(255,255,255,.08)}
-.marquee__track{display:flex;width:max-content;white-space:nowrap;will-change:transform}
-.marquee__track span{font-family:var(--font-display);font-style:italic;font-size:1.35rem;padding-right:1rem;color:#f3d9c8}
 
 /* ============================================================
    SECTIONS
@@ -433,7 +426,6 @@ a{color:inherit;text-decoration:none}
 /* ---------- reveal ---------- */
 [data-reveal]{opacity:0;transform:translateY(34px)}
 .no-js [data-reveal]{opacity:1;transform:none}
-@keyframes marqueeFallback{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
 /* ============================================================
    RESPONSIVE
