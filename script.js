@@ -9,6 +9,28 @@ const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').match
 const hasGSAP = typeof gsap !== 'undefined';
 if (hasGSAP && window.ScrollTrigger) gsap.registerPlugin(ScrollTrigger);
 
+/* ---------- Haptics (Vibration API) ----------
+   Fires tactile feedback on real commit moments. Supported on Android / many
+   Android browsers; iOS Safari has no web vibration API, so it no-ops there and
+   the visual + motion feedback carries the experience. Match the feel to the act. */
+const canVibrate = typeof navigator !== 'undefined' && 'vibrate' in navigator;
+const HAPTIC = {
+  tap: 7, select: 5, soft: 10, firm: 18,
+  shutter: [0, 22, 14, 40],          // click–settle, like a shutter
+  success: [0, 14, 30, 22],
+  warning: [0, 24, 34, 24],
+};
+function haptic(kind) {
+  if (!canVibrate) return;
+  try { navigator.vibrate(HAPTIC[kind] != null ? HAPTIC[kind] : kind); } catch (e) {}
+}
+window.__haptic = haptic;
+
+/* A light tick the instant a primary control is pressed (pointer-down = contact). */
+document.addEventListener('pointerdown', (e) => {
+  if (e.target.closest('.btn, .cap__start, .cc__chip, .lead__submit, .wa-float, [data-calendly]')) haptic('tap');
+}, { passive: true });
+
 /* ---------- Lenis smooth scroll (seamless) ---------- */
 let lenis = null;
 if (typeof Lenis !== 'undefined' && !reduceMotion) {
@@ -169,8 +191,9 @@ if (hasGSAP && window.ScrollTrigger && !reduceMotion) {
       });
       video.srcObject = stream;
       await video.play();
-      show(polaroid, false);
+      hideModalNow();
       screen.classList.add('is-live');
+      haptic('soft');                 // camera is live — gentle confirm
       armed = true;
       countdown(3);
     } catch (err) {
@@ -187,6 +210,7 @@ if (hasGSAP && window.ScrollTrigger && !reduceMotion) {
     if (n <= 0) { countEl.textContent = ''; capture(); return; }
     countEl.textContent = n;
     countEl.classList.remove('is-on'); void countEl.offsetWidth; countEl.classList.add('is-on');
+    haptic('select');                 // a tick on every count, in sync with the pop
     countTimer = setTimeout(() => countdown(n - 1), 850);
   }
   function snapNow() { if (armed) { clearTimeout(countTimer); countdown(0); } }
@@ -197,6 +221,7 @@ if (hasGSAP && window.ScrollTrigger && !reduceMotion) {
     const vw = video.videoWidth, vh = video.videoHeight;
     if (!vw) { start(); return; }
     if (flash) { flash.style.opacity = '1'; setTimeout(() => { flash.style.opacity = '0'; }, 180); }
+    haptic('shutter');                // fires on the same frame as the flash (visual + haptic in harmony)
 
     const canvas = composePrint(video, vw, vh);
     await new Promise((res) => canvas.toBlob((b) => {
@@ -293,20 +318,32 @@ if (hasGSAP && window.ScrollTrigger && !reduceMotion) {
     ]).then(() => { fontsReady = true; });
   }
 
-  function retake() { show(polaroid, false); start(); }
+  function retake() { hideModalNow(); start(); }
 
   /* ---- dismiss the modal and return focus to where it came from (HIG: modality) ---- */
-  let lastFocus = null;
+  let lastFocus = null, closeT = null;
   function openModal() {
     lastFocus = document.activeElement;
-    show(polaroid, true);
-    // move focus into the dialog so keyboard / VoiceOver land inside it
+    clearTimeout(closeT);
+    polaroid.hidden = false;
+    void polaroid.offsetWidth;                 // reflow so the enter transition runs
+    polaroid.classList.add('is-open');          // backdrop fades + card grows into place
     requestAnimationFrame(() => { try { polaroid.focus(); } catch (e) {} });
   }
+  function hideModalNow() {                      // instant hide (used when flowing straight to camera)
+    clearTimeout(closeT);
+    polaroid.classList.remove('is-open');
+    polaroid.hidden = true;
+  }
   function closeModal() {
-    show(polaroid, false);
+    if (polaroid.hidden) return;
+    polaroid.classList.remove('is-open');        // play the exit (reverse of the enter)
+    clearTimeout(closeT);
+    if (reduceMotion) { polaroid.hidden = true; }
+    else { closeT = setTimeout(() => { polaroid.hidden = true; }, 360); }
     stopStream();
     screen.classList.remove('is-live');
+    haptic('soft');
     if (lastFocus && lastFocus.focus) { try { lastFocus.focus(); } catch (e) {} }
   }
   // keep focus inside the dialog while it is open (simple trap)
@@ -354,6 +391,7 @@ if (hasGSAP && window.ScrollTrigger && !reduceMotion) {
   function showErr(msg, field) {
     if (leadErr) { leadErr.textContent = msg; leadErr.hidden = false; }
     if (field) field.setAttribute('aria-invalid', 'true');
+    haptic('warning');
   }
 
   // submit the lead — stores the photo + writes a row to the Google Sheet
@@ -389,6 +427,7 @@ if (hasGSAP && window.ScrollTrigger && !reduceMotion) {
     if (ok) {
       if (leadBody) leadBody.hidden = true;
       if (leadDone) leadDone.hidden = false;
+      haptic('success');              // lead captured — the completion beat
     } else {
       showErr('Couldn’t send just now, please try again.');
     }
