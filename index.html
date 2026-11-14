@@ -314,13 +314,16 @@
   </footer>
 
   <!-- captured: Polaroid preview + lead-capture form (top-level overlay) -->
-  <figure class="polaroid" data-polaroid hidden>
+  <figure class="polaroid" data-polaroid role="dialog" aria-modal="true" aria-label="Your Storibooth photo" tabindex="-1" hidden>
     <div class="capture-card">
       <div class="cc__bar">
+        <button class="cc__chip cc__chip--icon" data-act="close" type="button" aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
         <button class="cc__chip" data-act="retake" type="button">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Retake
         </button>
-        <button class="cc__chip" data-act="download" type="button">
+        <button class="cc__chip cc__chip--push" data-act="download" type="button">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></svg>Save
         </button>
       </div>
@@ -338,7 +341,7 @@
           <label class="field"><span>Event date</span>
             <input data-f="date" type="date" /></label>
           <button class="lead__submit" data-act="submit" type="submit"><span>Send my details</span></button>
-          <p class="lead__err" data-err hidden></p>
+          <p class="lead__err" data-err role="alert" aria-live="assertive" hidden></p>
         </form>
       </div>
 

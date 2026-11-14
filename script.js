@@ -213,7 +213,7 @@ if (hasGSAP && window.ScrollTrigger && !reduceMotion) {
     if (leadDone) leadDone.hidden = true;
     if (leadErr) { leadErr.hidden = true; leadErr.textContent = ''; }
     if (leadForm) leadForm.reset();
-    show(polaroid, true);
+    openModal();
     stopStream();
 
     // background: upload the Polaroid so the lead row carries a photo link
@@ -295,6 +295,32 @@ if (hasGSAP && window.ScrollTrigger && !reduceMotion) {
 
   function retake() { show(polaroid, false); start(); }
 
+  /* ---- dismiss the modal and return focus to where it came from (HIG: modality) ---- */
+  let lastFocus = null;
+  function openModal() {
+    lastFocus = document.activeElement;
+    show(polaroid, true);
+    // move focus into the dialog so keyboard / VoiceOver land inside it
+    requestAnimationFrame(() => { try { polaroid.focus(); } catch (e) {} });
+  }
+  function closeModal() {
+    show(polaroid, false);
+    stopStream();
+    screen.classList.remove('is-live');
+    if (lastFocus && lastFocus.focus) { try { lastFocus.focus(); } catch (e) {} }
+  }
+  // keep focus inside the dialog while it is open (simple trap)
+  polaroid.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { e.preventDefault(); closeModal(); return; }
+    if (e.key !== 'Tab') return;
+    const f = polaroid.querySelectorAll('button, input, [href], [tabindex]:not([tabindex="-1"])');
+    const vis = [...f].filter((el) => !el.hidden && el.offsetParent !== null && !el.disabled);
+    if (!vis.length) return;
+    const first = vis[0], last = vis[vis.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+
   // upload the Polaroid; returns a public image URL, or null on any failure
   async function uploadPolaroid(blob) {
     if (!UPLOAD_ENDPOINT || !blob) return null;
@@ -325,7 +351,10 @@ if (hasGSAP && window.ScrollTrigger && !reduceMotion) {
     document.body.appendChild(a); a.click(); a.remove();
   }
 
-  function showErr(msg) { if (leadErr) { leadErr.textContent = msg; leadErr.hidden = false; } }
+  function showErr(msg, field) {
+    if (leadErr) { leadErr.textContent = msg; leadErr.hidden = false; }
+    if (field) field.setAttribute('aria-invalid', 'true');
+  }
 
   // submit the lead — stores the photo + writes a row to the Google Sheet
   async function submitLead(e) {
@@ -334,8 +363,9 @@ if (hasGSAP && window.ScrollTrigger && !reduceMotion) {
     const phone = (fPhone.value || '').trim();
     const date = (fDate && fDate.value) || '';
     if (leadErr) leadErr.hidden = true;
-    if (name.length < 2) { showErr('Please enter your name.'); fName.focus(); return; }
-    if (phone.replace(/\D/g, '').length < 8) { showErr('Please enter a valid WhatsApp number.'); fPhone.focus(); return; }
+    fName.removeAttribute('aria-invalid'); fPhone.removeAttribute('aria-invalid');
+    if (name.length < 2) { showErr('Please enter your name.', fName); fName.focus(); return; }
+    if (phone.replace(/\D/g, '').length < 8) { showErr('Please enter a valid WhatsApp number.', fPhone); fPhone.focus(); return; }
 
     leadBtn.disabled = true;
     const label = leadBtn.querySelector('span'); const was = label ? label.textContent : '';
@@ -376,9 +406,12 @@ if (hasGSAP && window.ScrollTrigger && !reduceMotion) {
   leadForm && leadForm.addEventListener('submit', submitLead);
   // retake / download buttons appear in both the top bar and the success screen
   polaroid.addEventListener('click', (e) => {
+    if (e.target === polaroid) { closeModal(); return; }   // tap the dim backdrop to dismiss
     const b = e.target.closest('[data-act]'); if (!b) return;
-    if (b.getAttribute('data-act') === 'retake') retake();
-    else if (b.getAttribute('data-act') === 'download') download();
+    const act = b.getAttribute('data-act');
+    if (act === 'retake') retake();
+    else if (act === 'download') download();
+    else if (act === 'close') closeModal();
   });
   window.addEventListener('pagehide', stopStream);
 })();
