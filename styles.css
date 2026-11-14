@@ -52,9 +52,14 @@ a{color:inherit;text-decoration:none}
   font-weight:400;
   font-size:clamp(2rem,4.6vw,3.4rem);
   line-height:1.14;
-  letter-spacing:-.01em;
+  letter-spacing:-.018em;        /* size-specific tracking: tighter as display type grows */
   margin:0;
   color:var(--wine);
+}
+/* Fraunces ships an optical-size axis — let large display type use its display cut,
+   small text its text cut (Apple: The Details of UI Typography). */
+.h2,.wordmark,.flank,.p2__h,.lead__h,.feat h3,.step h3,.plan__price,.cc__done h3,.footer__logo{
+  font-optical-sizing:auto;
 }
 .h2 em{font-style:italic;color:var(--wine-deep)}
 .hero__title .line--em{font-style:italic;color:#f0cdb8}
@@ -84,6 +89,8 @@ a{color:inherit;text-decoration:none}
   will-change:transform;
 }
 .btn:hover{transform:translateY(-2px)}
+/* Respond the instant the button is pressed, not on release (Apple: Designing Fluid Interfaces). */
+.btn:active{transform:scale(.97);transition-duration:.08s}
 .btn .wa{width:1.2em;height:1.2em;fill:currentColor}
 .btn .cal{width:1.2em;height:1.2em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .btn--wine{--bg:var(--wine);--fg:var(--cream);box-shadow:0 8px 22px -10px rgba(132,21,21,.6)}
@@ -105,9 +112,9 @@ a{color:inherit;text-decoration:none}
   transition:background .4s var(--ease),box-shadow .4s var(--ease),padding .4s var(--ease);
 }
 .nav.is-stuck{
-  background:rgba(255,251,245,.82);
-  backdrop-filter:blur(14px);
-  box-shadow:0 1px 0 var(--line);
+  background:rgba(255,251,245,.72);
+  backdrop-filter:blur(18px) saturate(160%);
+  box-shadow:0 10px 24px -20px rgba(69,11,11,.5);   /* soft edge, not a hard 1px rule */
   padding-block:11px;
 }
 .nav__brand{display:flex;flex-direction:column;line-height:1}
@@ -119,7 +126,7 @@ a{color:inherit;text-decoration:none}
 .nav.is-stuck .nav__logo{color:var(--wine)}
 .nav__sub{
   font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;
-  color:rgba(255,251,245,.6);margin-top:3px;font-weight:600;
+  color:rgba(255,251,245,.72);margin-top:3px;font-weight:600;
 }
 .nav.is-stuck .nav__sub{color:var(--ink-soft)}
 .nav__links{display:flex;gap:1.8rem}
@@ -130,7 +137,7 @@ a{color:inherit;text-decoration:none}
 .nav__links a::after{content:"";position:absolute;left:0;bottom:-4px;height:1.5px;width:0;background:currentColor;transition:width .3s var(--ease)}
 .nav__links a:hover::after{width:100%}
 .nav.is-stuck .nav__links a{color:var(--ink)}
-.nav__cta{font-size:.85rem;padding:.7em 1.25em}
+.nav__cta{font-size:.85rem;padding:.7em 1.25em;min-height:44px}   /* 44pt min touch target */
 .nav.is-stuck .nav__cta{--bg:var(--wine);--fg:var(--cream)}
 
 /* ============================================================
@@ -159,7 +166,7 @@ a{color:inherit;text-decoration:none}
 /* --- wordmark --- */
 .wordmark{top:11.03%;left:0;width:100%;margin:0;text-align:center;z-index:2;
   font-family:'Aphrodite',var(--font-display);font-weight:400;
-  font-size:15vw;line-height:.9;letter-spacing:-.005em;color:#fffdfa}
+  font-size:15vw;line-height:.9;letter-spacing:-.018em;color:#fffdfa}
 
 /* --- flanks: BM left-aligned to the "S", IR right-aligned to the "h" --- */
 .flank{top:27.8%;z-index:2;font-family:'Aphrodite',var(--font-display);
@@ -409,7 +416,7 @@ a{color:inherit;text-decoration:none}
 .footer__links a{color:rgba(255,251,245,.75);font-size:.92rem;transition:color .3s}
 .footer__links a:hover{color:var(--cream)}
 .footer__copy{width:100%;margin:34px 0 0;padding-top:22px;border-top:1px solid rgba(255,251,245,.12);
-  font-size:.82rem;color:rgba(255,251,245,.5)}
+  font-size:.82rem;color:rgba(255,251,245,.62)}
 
 /* floating whatsapp */
 .wa-float{position:fixed;right:22px;bottom:22px;z-index:60;display:flex;align-items:center;gap:0;
@@ -458,9 +465,33 @@ a{color:inherit;text-decoration:none}
   .wa-float svg{width:27px;height:27px;margin:0 13px}
 }
 
+/* ---------- keyboard focus (visible, keyboard-only) ---------- */
+:where(a,button,[tabindex]):focus-visible{
+  outline:2.5px solid var(--wine);
+  outline-offset:3px;
+  border-radius:8px;
+}
+/* cream ring where the control sits on a wine / dark surface */
+.nav:not(.is-stuck) .nav__links a:focus-visible,
+.nav:not(.is-stuck) .nav__cta:focus-visible,
+.cta a:focus-visible,.cta button:focus-visible,
+.footer a:focus-visible,
+.screen :focus-visible,.cap__start:focus-visible,
+.btn--cream:focus-visible,.btn--ghost-light:focus-visible{
+  outline-color:var(--cream);
+}
+
+/* ---------- reduced transparency: frost the material into something solid ---------- */
+@media (prefers-reduced-transparency:reduce){
+  .nav.is-stuck{background:var(--cream);backdrop-filter:none}
+  .exp-card figcaption{background:var(--cream);backdrop-filter:none}
+  .polaroid{background:rgba(24,6,6,.96);backdrop-filter:none}
+}
+
 /* reduced motion */
 @media (prefers-reduced-motion:reduce){
   *{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
   [data-reveal]{opacity:1;transform:none}
   .float-a,.float-b{animation:none}
+  .wa-float::after{display:none}
 }
